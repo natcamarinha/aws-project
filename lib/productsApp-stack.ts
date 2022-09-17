@@ -5,12 +5,16 @@ import * as dynamodb from 'aws-cdk-lib/aws-dynamodb';
 import * as ssm from 'aws-cdk-lib/aws-ssm';
 import { Construct } from 'constructs';
 
+interface ProductsAppStackProps extends cdk.StackProps {
+  eventsDdb: dynamodb.Table
+}
+
 export class ProductsAppStack extends cdk.Stack {
   readonly productsFetchHandler: lambdaNodeJS.NodejsFunction
   readonly productsAdminHandler: lambdaNodeJS.NodejsFunction
   readonly productsDdb: dynamodb.Table
 
-  constructor(scope: Construct, id: string, props?: cdk.StackProps) {
+  constructor(scope: Construct, id: string, props: ProductsAppStackProps) {
     super(scope, id, props)
 
     this.productsDdb = new dynamodb.Table(this, 'ProductsDdb', {
@@ -42,7 +46,9 @@ export class ProductsAppStack extends cdk.Stack {
       environment: {
         PRODUCTS_DDB: this.productsDdb.tableName
       },
-      layers: [productsLayer]
+      layers: [productsLayer],
+      tracing: lambda.Tracing.ACTIVE,
+      insightsVersion: lambda.LambdaInsightsVersion.VERSION_1_0_119_0
     })
     this.productsDdb.grantReadData(this.productsFetchHandler)
 
@@ -59,7 +65,9 @@ export class ProductsAppStack extends cdk.Stack {
       environment: {
         PRODUCTS_DDB: this.productsDdb.tableName
       },
-      layers: [productsLayer]
+      layers: [productsLayer],
+      tracing: lambda.Tracing.ACTIVE,
+      insightsVersion: lambda.LambdaInsightsVersion.VERSION_1_0_119_0
     })
     this.productsDdb.grantWriteData(this.productsAdminHandler)
   }
